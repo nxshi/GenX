@@ -28,9 +28,9 @@ function write_start(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfStart,auxNew_Names)
 
-	total = DataFrame(["Total" 0 sum(dfStart.AnnualSum) fill(0.0, (1,T))], :auto)
+	total = DataFrame(["Total" 0 sum(dfStart.AnnualSum) fill(0.0, (1, T))], auxNew_Names)
 	total[:, 4:T+3] .= sum(start, dims = 1)
-	rename!(total,auxNew_Names)
 	dfStart = vcat(dfStart, total)
+    
 	CSV.write(joinpath(path, "start.csv"), dftranspose(dfStart, false), writeheader=false)
 end

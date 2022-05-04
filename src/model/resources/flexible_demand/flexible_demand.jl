@@ -53,36 +53,36 @@ If $t$ is first time step of the year (or the first time step of the representat
 function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
 ## Flexible demand resources available during all hours and can be either delayed or advanced (virtual storage-shiftable demand) - DR ==1
 
-println("Flexible Demand Resources Module")
+    println("Flexible Demand Resources Module")
 
-dfGen = inputs["dfGen"]
+    dfGen = inputs["dfGen"]
 
-T = inputs["T"]     # Number of time steps (hours)
-Z = inputs["Z"]     # Number of zones
-FLEX = inputs["FLEX"] # Set of flexible demand resources
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    FLEX = inputs["FLEX"] # Set of flexible demand resources
 
-START_SUBPERIODS = inputs["START_SUBPERIODS"]
-INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
+    START_SUBPERIODS = inputs["START_SUBPERIODS"]
+    INTERIOR_SUBPERIODS = inputs["INTERIOR_SUBPERIODS"]
 
-hours_per_subperiod = inputs["hours_per_subperiod"] # Total number of hours per subperiod
+    hours_per_subperiod = inputs["hours_per_subperiod"] # Total number of hours per subperiod
 
-END_HOURS = START_SUBPERIODS .+ hours_per_subperiod .- 1 # Last subperiod of each representative period
+    END_HOURS = START_SUBPERIODS .+ hours_per_subperiod .- 1 # Last subperiod of each representative period
 
-### Variables ###
+    ### Variables ###
 
-# Variable tracking total advanced (negative) or deferred (positive) demand for demand flex resource y in period t
-@variable(EP, vS_FLEX[y in FLEX, t=1:T]);
+    # Variable tracking total advanced (negative) or deferred (positive) demand for demand flex resource y in period t
+    @variable(EP, vS_FLEX[y in FLEX, t = 1:T])
 
-# Variable tracking demand deferred by demand flex resource y in period t
-@variable(EP, vCHARGE_FLEX[y in FLEX, t=1:T] >= 0);
+    # Variable tracking demand deferred by demand flex resource y in period t
+    @variable(EP, vCHARGE_FLEX[y in FLEX, t = 1:T] >= 0)
 
-### Expressions ###
+    ### Expressions ###
 
-## Power Balance Expressions ##
-@expression(EP, ePowerBalanceDemandFlex[t=1:T, z=1:Z],
-    sum(-EP[:vP][y,t]+EP[:vCHARGE_FLEX][y,t] for y in intersect(FLEX, dfGen[(dfGen[!,:Zone].==z),:][!,:R_ID])))
+    ## Power Balance Expressions ##
+    @expression(EP, ePowerBalanceDemandFlex[t = 1:T, z = 1:Z],
+        sum(-EP[:vP][y, t] + EP[:vCHARGE_FLEX][y, t] for y in intersect(FLEX, dfGen[(dfGen[!, :Zone].==z), :][!, :R_ID])))
 
-EP[:ePowerBalance] += ePowerBalanceDemandFlex
+    EP[:ePowerBalance] += ePowerBalanceDemandFlex
 
 # Capacity Reserves Margin policy
 if setup["CapacityReserveMargin"] > 0
@@ -137,7 +137,6 @@ for z in 1:Z
             sum(EP[:vCHARGE_FLEX][y,e] for e=hoursafter(hours_per_subperiod, t, 1:max_flexible_demand_advance)) >= -EP[:vS_FLEX][y,t])
 
     end
-end
 
 return EP
 end

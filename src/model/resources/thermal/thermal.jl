@@ -22,8 +22,9 @@ This module uses the following 'helper' functions in separate files: ```thermal_
 function thermal!(EP::Model, inputs::Dict, setup::Dict)
 	dfGen = inputs["dfGen"]
 
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    G = inputs["G"]
 
 	THERM_COMMIT = inputs["THERM_COMMIT"]
 	THERM_NO_COMMIT = inputs["THERM_NO_COMMIT"]

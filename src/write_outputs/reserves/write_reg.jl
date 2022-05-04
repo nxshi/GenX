@@ -30,9 +30,9 @@ function write_reg(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfReg,auxNew_Names)
 
-	total = DataFrame(["Total" 0 sum(dfReg.AnnualSum) fill(0.0, (1,T))], :auto)
+	total = DataFrame(["Total" 0 sum(dfReg.AnnualSum) fill(0.0, (1, T))], auxNew_Names)
 	total[!, 4:T+3] .= sum(reg, dims = 1)
-	rename!(total,auxNew_Names)
 	dfReg = vcat(dfReg, total)
+    
 	CSV.write(joinpath(path, "reg.csv"), dftranspose(dfReg, false), writeheader=false)
 end

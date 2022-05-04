@@ -59,24 +59,29 @@ In addition, this function adds investment and fixed O\&M related costs related 
 """
 function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 
-	println("Storage Investment Module")
+    println("Storage Investment Module")
 
 	dfGen = inputs["dfGen"]
 	MultiStage = setup["MultiStage"]
 
-	STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
-	NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
-	RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"] # Set of all storage resources eligible for energy capacity retirements
+    G = inputs["G"] # Number of resources (generators, storage, DR, and DERs)
+    Z = inputs["Z"]
+    STOR_ALL = inputs["STOR_ALL"] # Set of all storage resources
+    NEW_CAP_ENERGY = inputs["NEW_CAP_ENERGY"] # Set of all storage resources eligible for new energy capacity
+    RET_CAP_ENERGY = inputs["RET_CAP_ENERGY"] # Set of all storage resources eligible for energy capacity retirements
 
-	### Variables ###
 
-	## Energy storage reservoir capacity (MWh capacity) built/retired for storage with variable power to energy ratio (STOR=1 or STOR=2)
+    ### Variables ###
 
-	# New installed energy capacity of resource "y"
-	@variable(EP, vCAPENERGY[y in NEW_CAP_ENERGY] >= 0)
+    ## Energy storage reservoir capacity (MWh capacity) built/retired for storage with variable power to energy ratio (STOR=1 or STOR=2)
 
-	# Retired energy capacity of resource "y" from existing capacity
-	@variable(EP, vRETCAPENERGY[y in RET_CAP_ENERGY] >= 0)
+    # New installed energy capacity of resource "y"
+    @variable(EP, vCAPENERGY[y in NEW_CAP_ENERGY] >= 0)
+
+    # Retired energy capacity of resource "y" from existing capacity
+    @variable(EP, vRETCAPENERGY[y in RET_CAP_ENERGY] >= 0)
+
+    ### Expressions ###
 
 	if MultiStage == 1
 		@variable(EP, vEXISTINGCAPENERGY[y in STOR_ALL] >= 0);
@@ -102,20 +107,35 @@ function investment_energy!(EP::Model, inputs::Dict, setup::Dict)
 		end
 	)
 
-	## Objective Function Expressions ##
+    # Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
+    # If resource is not eligible for new energy capacity, fixed costs are only O&M costs
+    # @expression(EP, eCFixEnergy[y in STOR_ALL],
+    #     if y in NEW_CAP_ENERGY # Resources eligible for new capacity
+    #         dfGen[!, :Inv_Cost_per_MWhyr][y] * vCAPENERGY[y] + dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y]
+    #     else
+    #         dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y]
+    #     end
+    # )
+    @expression(EP, eCInvEnergyCap[y in STOR_ALL],
+        if y in NEW_CAP_ENERGY # Resources eligible for new capacity
+            dfGen[!, :Inv_Cost_per_MWhyr][y] * vCAPENERGY[y]
+        else
+            EP[:vZERO]
+        end
+    )
+    @expression(EP, eCFOMEnergyCap[y in STOR_ALL], dfGen[!, :Fixed_OM_Cost_per_MWhyr][y] * eTotalCapEnergy[y])
+    @expression(EP, eCFixEnergy[y in STOR_ALL], EP[:eCFOMEnergyCap][y] + EP[:eCInvEnergyCap][y])
+    # Sum individual resource contributions to fixed costs to get total fixed costs
+    @expression(EP, eZonalCFOMEnergyCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCFOMEnergyCap][y] for y in intersect(STOR_ALL, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+    @expression(EP, eZonalCInvEnergyCap[z = 1:Z], EP[:vZERO] + sum(EP[:eCInvEnergyCap][y] for y in intersect(STOR_ALL, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
+    @expression(EP, eZonalCFixEnergy[z = 1:Z], EP[:vZERO] + sum(eCFixEnergy[y] for y in intersect(STOR_ALL, dfGen[(dfGen[!, :Zone].==z), :R_ID])))
 
-	# Fixed costs for resource "y" = annuitized investment cost plus fixed O&M costs
-	# If resource is not eligible for new energy capacity, fixed costs are only O&M costs
-	@expression(EP, eCFixEnergy[y in STOR_ALL],
-		if y in NEW_CAP_ENERGY # Resources eligible for new capacity
-			dfGen[y,:Inv_Cost_per_MWhyr]*vCAPENERGY[y] + dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCapEnergy[y]
-		else
-			dfGen[y,:Fixed_OM_Cost_per_MWhyr]*eTotalCapEnergy[y]
-		end
-	)
+    @expression(EP, eTotalCFOMEnergy, sum(EP[:eZonalCFOMEnergyCap][z] for z in 1:Z))
+    @expression(EP, eTotalCInvEnergy, sum(EP[:eZonalCInvEnergyCap][z] for z in 1:Z))
+    @expression(EP, eTotalCFixEnergy, sum(EP[:eZonalCFixEnergy][z] for z in 1:Z))
 
-	# Sum individual resource contributions to fixed costs to get total fixed costs
-	@expression(EP, eTotalCFixEnergy, sum(EP[:eCFixEnergy][y] for y in STOR_ALL))
+    # Add term to objective function expression
+    EP[:eObj] += eTotalCFixEnergy
 
 	# Add term to objective function expression
 	if MultiStage == 1

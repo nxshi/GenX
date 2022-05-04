@@ -376,7 +376,6 @@ end
 
 @doc raw"""
     hoursbefore(p::Int, t::Int, b::UnitRange)
-
 This is a generalization of hoursbefore(... b::Int)
 to allow for example b=1:3 to fetch a Vector{Int} of the three hours before
 time index t.

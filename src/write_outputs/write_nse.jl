@@ -28,22 +28,20 @@ function write_nse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 	dfNse = DataFrame(Segment = repeat(1:SEG, outer = Z), Zone = repeat(1:Z, inner = SEG), AnnualSum = zeros(SEG * Z))
 	nse = zeros(SEG * Z, T)
 	for z in 1:Z
-		if setup["ParameterScale"] == 1
-			nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE])[:, :, z] * ModelScalingFactor
-		else
-			nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE])[:, :, z]
-		end
+	    nse[((z-1)*SEG+1):z*SEG, :] = value.(EP[:vNSE])[:, :, z]
 	end
-	dfNse.AnnualSum .= nse * inputs["omega"]
-	dfNse = hcat(dfNse, DataFrame(nse, :auto))
-	auxNew_Names=[Symbol("Segment");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
-	rename!(dfNse,auxNew_Names)
+	if setup["ParameterScale"] == 1
+	    nse *= ModelScalingFactor
+	end
+    dfNse.AnnualSum .= nse * inputs["omega"]
+    dfNse = hcat(dfNse, DataFrame(nse, :auto))
+    auxNew_Names = [Symbol("Segment"); Symbol("Zone"); Symbol("AnnualSum"); [Symbol("t$t") for t in 1:T]]
+    rename!(dfNse, auxNew_Names)
 
-	total = DataFrame(["Total" 0 sum(dfNse[!,:AnnualSum]) fill(0.0, (1,T))], :auto)
-	total[:, 4:T+3] .= sum(nse, dims = 1)
-	rename!(total,auxNew_Names)
-	dfNse = vcat(dfNse, total)
+    total = DataFrame(["Total" 0 sum(dfNse[!, :AnnualSum]) fill(0.0, (1, T))], auxNew_Names)
+    total[:, 4:T+3] .= sum(nse, dims=1)
+    dfNse = vcat(dfNse, total)
 
-	CSV.write(joinpath(path, "nse.csv"),  dftranspose(dfNse, false), writeheader=false)
-	return dfNse
+    CSV.write(joinpath(path, "nse.csv"), dftranspose(dfNse, false), writeheader=false)
+    return dfNse
 end

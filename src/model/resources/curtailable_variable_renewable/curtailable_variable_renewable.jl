@@ -48,6 +48,18 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
 	VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1,:R_ID], VRE)
 	VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
 
+	if haskey(setup, "Reserves")
+	    Reserves = copy(setup["Reserves"])
+	else
+	    Reserves = 0
+	end
+
+	if haskey(setup, "CapacityReserveMargin")
+	    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
+	else
+	    CapacityReserveMargin = 0
+	end
+
 	### Expressions ###
 
 	## Power Balance Expressions ##

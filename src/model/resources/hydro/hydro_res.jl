@@ -87,7 +87,16 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 
 	HYDRO_RES = inputs["HYDRO_RES"]	# Set of all reservoir hydro resources, used for common constraints
 	HYDRO_RES_KNOWN_CAP = inputs["HYDRO_RES_KNOWN_CAP"] # Reservoir hydro resources modeled with unknown reservoir energy capacity
-
+	if haskey(setup, "Reserves")
+	    Reserves = copy(setup["Reserves"])
+	else
+	    Reserves = 0
+	end
+	if haskey(setup, "CapacityReserveMargin")
+	    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
+	else
+	    CapacityReserveMargin = 0
+	end
 	### Variables ###
 
 	# Reservoir hydro storage level of resource "y" at hour "t" [MWh] on zone "z" - unbounded

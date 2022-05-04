@@ -32,6 +32,6 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
 	    chargecost *= ModelScalingFactor^2
 	end
 	dfChargingcost.AnnualSum .= chargecost * inputs["omega"]
-	CSV.write(joinpath(path, "ChargingCost.csv"), dfChargingcost)
+	CSV.write(joinpath(path,"ChargingCost.csv"), dfChargingcost)
 	return dfChargingcost
 end
