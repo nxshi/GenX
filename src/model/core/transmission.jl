@@ -117,7 +117,6 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     L = inputs["L"]     # Number of transmission lines
     UCommit = setup["UCommit"]
     NetworkExpansion = setup["NetworkExpansion"]
-    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
     MultiStage = copy(setup["MultiStage"])
     ## sets and indices for transmission losses and expansion
     TRANS_LOSS_SEGS = inputs["TRANS_LOSS_SEGS"] # Number of segments used in piecewise linear approximations quadratic loss functions - can only take values of TRANS_LOSS_SEGS =1, 2
@@ -221,13 +220,6 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     EP[:ePowerBalance] += ePowerBalanceLossesByZone
     EP[:ePowerBalance] += ePowerBalanceNetExportFlows
 
-    # Capacity Reserves Margin policy
-    if CapacityReserveMargin > 0
-        if Z > 1
-            @expression(EP, eCapResMarBalanceTrans[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(inputs["dfTransCapRes_excl"][l, res] * inputs["dfDerateTransCapRes"][l, res] * EP[:vFLOW][l, t] for l in 1:L))
-            EP[:eCapResMarBalance] -= eCapResMarBalanceTrans
-        end
-    end
 
     ### Constraints ###
 

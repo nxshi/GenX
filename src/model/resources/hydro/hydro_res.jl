@@ -103,11 +103,7 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
 
     EP[:ePowerBalance] += ePowerBalanceHydroRes
 
-    # Capacity Reserves Margin policy
-    if setup["CapacityReserveMargin"] > 0
-        @expression(EP, eCapResMarBalanceHydro[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y, Symbol("CapRes_$res")] * EP[:vP][y, t] for y in HYDRO_RES))
-        EP[:eCapResMarBalance] += eCapResMarBalanceHydro
-    end
+
 
     ### Constratints ###
 
@@ -154,11 +150,6 @@ function hydro_res!(EP::Model, inputs::Dict, setup::Dict)
         ### Reserve related constraints for reservoir hydro resources (y in HYDRO_RES), if used
         hydro_res_reserves!(EP, inputs)
     end
-    ##CO2 Polcy Module Hydro Res Generation by zone
-    @expression(EP, eGenerationByHydroRes[z=1:Z, t=1:T], # the unit is GW
-        sum(EP[:vP][y, t] for y in intersect(inputs["HYDRO_RES"], dfGen[dfGen[!, :Zone].==z, :R_ID]))
-    )
-    EP[:eGenerationByZone] += eGenerationByHydroRes
 
 end
 

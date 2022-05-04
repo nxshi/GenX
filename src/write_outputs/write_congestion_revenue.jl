@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_congestion_revenue(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_congestion_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for writing congestion revenue of each line.
 """

@@ -67,12 +67,49 @@ function co2_generation_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
+    THERM_ALL = inputs["THERM_ALL"]
+    VRE = inputs["VRE"]
+    HYDRO_RES = inputs["HYDRO_RES"]
+    MUST_RUN = inputs["MUST_RUN"]
+    # Initialization
+    @expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0) # this eGenerationByZone does not include the grid injection of storage and flexible load
 
+    ##CO2 Polcy Module Thermal Generation by zone
+    if !isempty(THERM_ALL)
+        @expression(EP, eGenerationByThermAll[z=1:Z, t=1:T], # the unit is GW
+            sum(EP[:vP][y, t] for y in intersect(THERM_ALL, dfGen[dfGen[!, :Zone].==z, :R_ID]))
+        )
+        EP[:eGenerationByZone] += eGenerationByThermAll
+    end
 
+    ##CO2 Polcy Module VRE Generation by zone
+    if !isempty(VRE)
+        @expression(EP, eGenerationByVRE[z=1:Z, t=1:T], # the unit is GW
+            sum(EP[:vP][y, t] for y in intersect(VRE, dfGen[dfGen[!, :Zone].==z, :R_ID]))
+        )
+        EP[:eGenerationByZone] += eGenerationByVRE
+    end
+
+    ##CO2 Polcy Module Hydro Res Generation by zone
+    if !isempty(HYDRO_RES)
+        @expression(EP, eGenerationByHydroRes[z=1:Z, t=1:T], # the unit is GW
+            sum(EP[:vP][y, t] for y in intersect(HYDRO_RES, dfGen[dfGen[!, :Zone].==z, :R_ID]))
+        )
+        EP[:eGenerationByZone] += eGenerationByHydroRes
+    end
+
+    ##CO2 Polcy Module Must Run Generation by zone
+    if !isempty(MUST_RUN)
+        @expression(EP, eGenerationByMustRun[z=1:Z, t=1:T], # the unit is GW
+            sum(EP[:vP][y, t] for y in intersect(MUST_RUN, dfGen[dfGen[!, :Zone].==z, :R_ID]))
+        )
+        EP[:eGenerationByZone] += eGenerationByMustRun
+    end
+    
     ### Constraints ###
 
     ## Generation + Rate-based: Emissions constraint in terms of rate (tons/MWh)
-    @constraint(EP, cCO2Emissions_genrate[cap = 1:inputs["NCO2GenRateCap"]],
+    @constraint(EP, cCO2Emissions_genrate[cap=1:inputs["NCO2GenRateCap"]],
         sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2GenRateCapZones"][:, cap])) <=
         sum(inputs["dfMaxCO2GenRate"][z, cap] * inputs["omega"][t] * EP[:eGenerationByZone][z, t] for t = 1:T, z in findall(x -> x == 1, inputs["dfCO2GenRateCapZones"][:, cap]))
     )

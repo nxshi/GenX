@@ -166,15 +166,5 @@ function investment_discharge(EP::Model, inputs::Dict, setup::Dict)
     # DEV NOTE: This constraint may be violated in some cases where Existing_Cap_MW is <= Min_Cap_MW and lead to infeasabilty
     @constraint(EP, cMinCap[y in intersect(dfGen[dfGen.Min_Cap_MW.>0, :R_ID], 1:G)], eTotalCap[y] >= dfGen[!, :Min_Cap_MW][y])
 
-
-    if setup["MinCapReq"] == 1
-        @expression(EP, eMinCapResInvest[mincap=1:inputs["NumberOfMinCapReqs"]], sum(dfGen[y, Symbol("MinCapTag_$mincap")] * EP[:eTotalCap][y] for y in 1:G))
-        EP[:eMinCapRes] += eMinCapResInvest
-    end
-
-    if (setup["MaxCapReq"] == 1)
-        @expression(EP, eMaxCapResInvest[maxcap=1:inputs["NumberOfMaxCapReqs"]], sum(dfGen[y, Symbol("MaxCapTag_$maxcap")] * EP[:eTotalCap][y] for y in 1:G))
-        EP[:eMaxCapRes] += eMaxCapResInvest
-    end
     return EP
 end

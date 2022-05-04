@@ -89,14 +89,7 @@ function non_served_energy!(EP::Model, inputs::Dict, setup::Dict)
     if SEG >= 2
         @expression(EP, eDemandResponse[t = 1:T, z = 1:Z], sum(vNSE[s, t, z] for s in 2:SEG))
     end
-    # Capacity Reserves Margin policy
-    if setup["CapacityReserveMargin"] == 1
-        if SEG >= 2
-            @expression(EP, eCapResMarBalanceNSE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(EP[:eDemandResponse][t, z] for z in findall(x -> x > 0, inputs["dfCapRes"][:, res])))
-            EP[:eCapResMarBalance] += eCapResMarBalanceNSE
-        end
-    end
-
+    
     ### Constratints ###
 
     # Demand curtailed in each segment of curtailable demands cannot exceed maximum allowable share of demand

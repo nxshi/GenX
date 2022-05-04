@@ -29,12 +29,61 @@ Instead of modeling capacity reserve margin requirement (a.k.a. capacity market 
 Note that multiple capacity reserve margin requirements can be specified covering different individual zones or aggregations of zones, where the total number of constraints is specified by the GenX settings parameter ```CapacityReserveMargin``` (where this parameter should be an integer value > 0).
 """
 function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
-	# capacity reserve margin constraint
-	T = inputs["T"]
-	println("Capacity Reserve Margin Policies Module")
+    # capacity reserve margin constraint
+    Z = inputs["Z"]
+    T = inputs["T"]
+    SEG = inputs["SEG"] # Number of load curtailment segments
+    THERM_ALL = inputs["THERM_ALL"]
+    VRE = inputs["VRE"]
+    HYDRO_RES = inputs["HYDRO_RES"]
+    FLEX = inputs["FLEX"]
+    MUST_RUN = inputs["MUST_RUN"]
+    STOR_ALL = inputs["STOR_ALL"]
+    println("Capacity Reserve Margin Policies Module")
+    NCapacityReserveMargin = inputs["NCapacityReserveMargin"]
+    # initialization
+    @expression(EP, eCapResMarBalance[res = 1:NCapacityReserveMargin, t = 1:T], 0)
+    # demand response
+    if SEG >= 2
+        @expression(EP, eCapResMarBalanceNSE[res = 1:NCapacityReserveMargin, t = 1:T], sum(EP[:eDemandResponse][t, z] for z in findall(x -> x > 0, inputs["dfCapRes"][:, res])))
+        EP[:eCapResMarBalance] += eCapResMarBalanceNSE
+    end
+    # Thermal units
+    if !isempty(THERM_ALL)
+        @expression(EP, eCapResMarBalanceThermal[res = 1:NCapacityReserveMargin, t = 1:T], sum(dfGen[y, Symbol("CapRes_$res")] * EP[:eTotalCap][y] for y in THERM_ALL))
+        EP[:eCapResMarBalance] += eCapResMarBalanceThermal
+    end
+    # curtailable_variable_renewable
+    if !isempty(VRE)
+        @expression(EP, eCapResMarBalanceVRE[res = 1:NCapacityReserveMargin, t = 1:T], sum(dfGen[y, Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y, t] for y in VRE))
+        EP[:eCapResMarBalance] += eCapResMarBalanceVRE
+    end
+    # Hydro power with reservoirs
+    if !isempty(HYDRO_RES)
+        @expression(EP, eCapResMarBalanceHydro[res = 1:NCapacityReserveMargin, t = 1:T], sum(dfGen[y, Symbol("CapRes_$res")] * EP[:vP][y, t] for y in HYDRO_RES))
+        EP[:eCapResMarBalance] += eCapResMarBalanceHydro
+    end
+    # must run generators
+    if !isempty(MUST_RUN)
+        @expression(EP, eCapResMarBalanceMustRun[res = 1:NCapacityReserveMargin, t = 1:T], sum(dfGen[y, Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y, t] for y in MUST_RUN))
+        EP[:eCapResMarBalance] += eCapResMarBalanceMustRun
+    end
+    # storages
+    if !isempty(STOR_ALL)
+        @expression(EP, eCapResMarBalanceStor[res = 1:NCapacityReserveMargin, t = 1:T], sum(dfGen[y, Symbol("CapRes_$res")] * (EP[:vP][y, t] - EP[:vCHARGE][y, t]) for y in STOR_ALL))
+        EP[:eCapResMarBalance] += eCapResMarBalanceStor
+    end
+    # Flexible demand
+    if !isempty(FLEX)
+        @expression(EP, eCapResMarBalanceFlex[res = 1:NCapacityReserveMargin, t = 1:T], sum(dfGen[y, Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y, t] - EP[:vP][y, t]) for y in FLEX))
+        EP[:eCapResMarBalance] += eCapResMarBalanceFlex
+    end
+    # Transmission
+    if Z > 1
+        @expression(EP, eCapResMarBalanceTrans[res = 1:NCapacityReserveMargin, t = 1:T], sum(inputs["dfTransCapRes_excl"][l, res] * inputs["dfDerateTransCapRes"][l, res] * EP[:vFLOW][l, t] for l in 1:L))
+        EP[:eCapResMarBalance] -= eCapResMarBalanceTrans
+    end
 
-	@constraint(EP, cCapacityResMargin[res=1:inputs["NCapacityReserveMargin"], t=1:T], EP[:eCapResMarBalance][res, t]
-				>= sum(inputs["pD"][t,z] * (1 + inputs["dfCapRes"][z,res])
-				for z=findall(x->x>0,inputs["dfCapRes"][:,res])))
+    @constraint(EP, cCapacityResMargin[res = 1:NCapacityReserveMargin, t = 1:T], EP[:eCapResMarBalance][res, t] >= sum(inputs["pD"][t, z] * (1 + inputs["dfCapRes"][z, res]) for z = findall(x -> x > 0, inputs["dfCapRes"][:, res])))
 
 end

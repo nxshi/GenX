@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_zonalnse(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_zonalnse(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting non-served energy for every model zone and time step.
 """

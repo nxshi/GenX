@@ -84,11 +84,6 @@ function flexible_demand!(EP::Model, inputs::Dict, setup::Dict)
 
     EP[:ePowerBalance] += ePowerBalanceDemandFlex
 
-    # Capacity Reserves Margin policy
-    if setup["CapacityReserveMargin"] > 0
-        @expression(EP, eCapResMarBalanceFlex[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * (EP[:vCHARGE_FLEX][y,t] - EP[:vP][y,t]) for y in FLEX))
-        EP[:eCapResMarBalance] += eCapResMarBalanceFlex
-    end
 
     ## Objective Function Expressions ##
 

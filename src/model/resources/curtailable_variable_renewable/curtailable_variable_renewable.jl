@@ -37,7 +37,6 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
     dfGen = inputs["dfGen"]
 
     Reserves = setup["Reserves"]
-    CapacityReserveMargin = setup["CapacityReserveMargin"]
 
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
@@ -48,11 +47,6 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
     VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1, :R_ID], VRE)
     VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
 
-
-    Reserves = copy(setup["Reserves"])
-
-    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
-
     ### Expressions ###
 
     ## Power Balance Expressions ##
@@ -61,12 +55,6 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
         sum(EP[:vP][y, t] for y in intersect(VRE, dfGen[dfGen[!, :Zone].==z, :R_ID])))
 
     EP[:ePowerBalance] += ePowerBalanceDisp
-
-    # Capacity Reserves Margin policy
-    if CapacityReserveMargin > 0
-        @expression(EP, eCapResMarBalanceVRE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y, Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y, t] for y in VRE))
-        EP[:eCapResMarBalance] += eCapResMarBalanceVRE
-    end
 
     ### Constratints ###
     # For resource for which we are modeling hourly power output
@@ -91,11 +79,6 @@ function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
     for y in VRE_NO_POWER_OUT
         fix.(EP[:vP][y, :], 0.0, force=true)
     end
-    ##CO2 Polcy Module VRE Generation by zone
-    @expression(EP, eGenerationByVRE[z=1:Z, t=1:T], # the unit is GW
-        sum(EP[:vP][y, t] for y in intersect(inputs["VRE"], dfGen[dfGen[!, :Zone].==z, :R_ID]))
-    )
-    EP[:eGenerationByZone] += eGenerationByVRE
 
 end
 

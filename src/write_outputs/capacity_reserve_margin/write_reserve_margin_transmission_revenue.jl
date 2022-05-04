@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw"""
-	write_reserve_margin_payment(path::AbstractString, sep::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+	write_reserve_margin_payment(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
 
 Function for reporting the capacity revenue earned by each generator listed in the input file. 
     GenX will print this file only when capacity reserve margin is modeled and the shadow price can be obtained form the solver. 

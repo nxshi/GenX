@@ -107,10 +107,8 @@ function load_inputs(setup::Dict, path::AbstractString)
     if setup["CO2Credit"] >= 1
         inputs = load_co2_credit(setup, path, inputs)
     end
-    if haskey(setup, "TFS")
-        if setup["TFS"] == 1
-            inputs = load_twentyfourseven(setup, path, inputs)
-        end
+    if setup["TFS"] == 1
+        inputs = load_twentyfourseven(setup, path, inputs)
     end
 
 

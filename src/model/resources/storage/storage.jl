@@ -117,7 +117,6 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
     STOR_ALL = inputs["STOR_ALL"]
     OperationWrapping = setup["OperationWrapping"]
     Reserves = copy(setup["Reserves"])
-    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
     MultiStage = copy(setup["MultiStage"])
 
     if !isempty(STOR_ALL)
@@ -138,13 +137,6 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
 
     if !isempty(inputs["STOR_SYMMETRIC"])
         EP = storage_symmetric(EP, inputs, Reserves)
-    end
-
-
-    # Capacity Reserves Margin policy
-    if CapacityReserveMargin > 0
-        @expression(EP, eCapResMarBalanceStor[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y, Symbol("CapRes_$res")] * (EP[:vP][y, t] - EP[:vCHARGE][y, t]) for y in STOR_ALL))
-        EP[:eCapResMarBalance] += eCapResMarBalanceStor
     end
 
     return EP

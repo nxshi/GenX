@@ -109,27 +109,12 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     # Initialize Objective Function Expression
     @expression(EP, eObj, 0)
 
-
-    #@expression(EP, :eCO2Cap[cap=1:inputs["NCO2Cap"]], 0)
-    @expression(EP, eGenerationByZone[z=1:Z, t=1:T], 0) # this eGenerationByZone does not include the grid injection of storage and flexible load
-    # Initialize Capacity Reserve Margin Expression
-
-    if setup["CapacityReserveMargin"] > 0
-        @expression(EP, eCapResMarBalance[res=1:inputs["NCapacityReserveMargin"], t=1:T], 0)
-    end
-
-
-    if (setup["MinCapReq"] == 1)
-        @expression(EP, eMinCapRes[mincap=1:inputs["NumberOfMinCapReqs"]], 0)
-    end
-
-    if (setup["MaxCapReq"] == 1)
-        @expression(EP, eMaxCapRes[maxcap=1:inputs["NumberOfMaxCapReqs"]], 0)
-    end
     # Infrastructure
-    EP = discharge(EP, inputs, setup)
+    discharge!(EP, inputs, setup)
 
-    EP = non_served_energy(EP, inputs, setup)
+    non_served_energy!(EP, inputs, setup)
+
+    investment_discharge!(EP, inputs, setup)
 
     # Endogenous Retirements
 
@@ -137,64 +122,54 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
         EP = endogenous_retirement!(EP, inputs, setup["MultiStageSettingsDict"])
     end
 
-	# Infrastructure
-	discharge!(EP, inputs, setup)
+    if setup["UCommit"] > 0
+        ucommit!(EP, inputs, setup)
+    end
 
-	non_served_energy!(EP, inputs, setup)
+    # emissions!(EP, inputs)
 
-	investment_discharge!(EP, inputs, setup)
+    if setup["Reserves"] > 0
+        reserves!(EP, inputs, setup)
+    end
 
-	if setup["UCommit"] > 0
-		ucommit!(EP, inputs, setup)
-	end
+    if Z > 1
+        transmission!(EP, inputs, setup)
+    end
 
-	emissions!(EP, inputs)
+    # Model constraints, variables, expression related to energy storage modeling
 
-	if setup["Reserves"] > 0
-		reserves!(EP, inputs, setup)
-	end
+    if !isempty(inputs["VRE"])
+        curtailable_variable_renewable!(EP, inputs, setup)
+    end
 
-	if Z > 1
-		transmission!(EP, inputs, setup)
-	end
+    # Model constraints, variables, expression related to non-dispatchable renewable resources
+    if !isempty(inputs["MUST_RUN"])
+        must_run!(EP, inputs, setup)
+    end
 
     # Model constraints, variables, expression related to energy storage modeling
     if !isempty(inputs["STOR_ALL"])
-        EP = storage(EP, inputs, setup)
+        storage!(EP, inputs, setup)
     end
 
-	if !isempty(inputs["VRE"])
-		curtailable_variable_renewable!(EP, inputs, setup)
-	end
+    # Model constraints, variables, expression related to reservoir hydropower resources
+    if !isempty(inputs["HYDRO_RES"])
+        hydro_res!(EP, inputs, setup)
+    end
 
-	# Model constraints, variables, expression related to non-dispatchable renewable resources
-	if !isempty(inputs["MUST_RUN"])
-		must_run!(EP, inputs, setup)
-	end
+    # Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
+    if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
+        hydro_inter_period_linkage!(EP, inputs)
+    end
 
-	# Model constraints, variables, expression related to energy storage modeling
-	if !isempty(inputs["STOR_ALL"])
-		storage!(EP, inputs, setup)
-	end
-
-	# Model constraints, variables, expression related to reservoir hydropower resources
-	if !isempty(inputs["HYDRO_RES"])
-		hydro_res!(EP, inputs, setup)
-	end
-
-	# Model constraints, variables, expression related to reservoir hydropower resources with long duration storage
-	if setup["OperationWrapping"] == 1 && !isempty(inputs["STOR_HYDRO_LONG_DURATION"])
-		hydro_inter_period_linkage!(EP, inputs)
-	end
-
-	# Model constraints, variables, expression related to demand flexibility resources
-	if !isempty(inputs["FLEX"])
-		flexible_demand!(EP, inputs, setup)
-	end
-	# Model constraints, variables, expression related to thermal resource technologies
-	if !isempty(inputs["THERM_ALL"])
-		thermal!(EP, inputs, setup)
-	end
+    # Model constraints, variables, expression related to demand flexibility resources
+    if !isempty(inputs["FLEX"])
+        flexible_demand!(EP, inputs, setup)
+    end
+    # Model constraints, variables, expression related to thermal resource technologies
+    if !isempty(inputs["THERM_ALL"])
+        thermal!(EP, inputs, setup)
+    end
 
     # Policies
     # CO2
@@ -226,30 +201,29 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
 
-	# Energy Share Requirement
-	if setup["EnergyShareRequirement"] >= 1
-		energy_share_requirement!(EP, inputs, setup)
-	end
+    # Energy Share Requirement
+    if setup["EnergyShareRequirement"] >= 1
+        energy_share_requirement!(EP, inputs, setup)
+    end
 
-	#Capacity Reserve Margin
-	if setup["CapacityReserveMargin"] > 0
-		cap_reserve_margin!(EP, inputs, setup)
-	end
+    #Capacity Reserve Margin
+    if setup["CapacityReserveMargin"] > 0
+        cap_reserve_margin!(EP, inputs, setup)
+    end
 
-	if (setup["MinCapReq"] == 1)
-		minimum_capacity_requirement!(EP, inputs, setup)
-	end
+    if (setup["MinCapReq"] == 1)
+        minimum_capacity_requirement!(EP, inputs, setup)
+    end
 
 
     if (setup["MaxCapReq"] == 1)
-        EP = maximum_capacity_limit!(EP, inputs, setup)
+        maximum_capacity_limit!(EP, inputs, setup)
     end
 
-    if (haskey(setup, "TFS"))
-        if (setup["TFS"] == 1)
-            EP = twentyfourseven!(EP, inputs, setup)
-        end
+    if (setup["TFS"] == 1)
+        twentyfourseven!(EP, inputs, setup)
     end
+
     ## Define the objective function
     @objective(EP, Min, EP[:eObj])
 

@@ -69,8 +69,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
 
     write_status(path, inputs, setup, EP)
     write_costs(path, inputs, setup, EP)
-    dfCap = write_capacity(path, inputs, setup, EP)
-    dfPower = write_power(path, inputs, setup, EP)
+    write_capacity(path, inputs, setup, EP)
+    write_power(path, inputs, setup, EP)
     write_charge(path, inputs, setup, EP)
     write_capacityfactor(path, inputs, setup, EP)
     write_storage(path, inputs, setup, EP)
@@ -211,10 +211,8 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             dfCO2CaptureCredit = write_credit_for_captured_emissions(path, inputs, setup, EP)
         end
 
-        if haskey(setup, "TFS")
-            if setup["TFS"] == 1
-                write_twentyfourseven(path, inputs, setup, EP)
-            end
+        if setup["TFS"] == 1
+            write_twentyfourseven(path, inputs, setup, EP)
         end
 
         write_net_revenue(path, inputs, setup, EP, dfESRRev, dfResRevenue, dfChargingcost, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfCO2MassCapCost, dfCO2LoadRateCapCost, dfCO2GenRateCapCost, dfCO2TaxCost, dfCO2CaptureCredit)
