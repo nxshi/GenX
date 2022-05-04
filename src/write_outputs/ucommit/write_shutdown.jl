@@ -28,9 +28,10 @@ function write_shutdown(path::AbstractString, inputs::Dict, setup::Dict, EP::Mod
 	dfShutdown = hcat(dfShutdown, DataFrame(shut, :auto))
 	auxNew_Names=[Symbol("Resource");Symbol("Zone");Symbol("AnnualSum");[Symbol("t$t") for t in 1:T]]
 	rename!(dfShutdown,auxNew_Names)
-	total=DataFrame(["Total" 0 sum(dfShutdown.AnnualSum) fill(0.0, (1,T))], :auto)
+
+	total = DataFrame(["Total" 0 sum(dfShutdown.AnnualSum) fill(0.0, (1, T))], :auxNew_Names)
 	total[:, 4:T+3] .= sum(shut, dims = 1)
-	rename!(total,auxNew_Names)
 	dfShutdown = vcat(dfShutdown, total)
+    
 	CSV.write(joinpath(path, "shutdown.csv"), dftranspose(dfShutdown, false), writeheader=false)
 end

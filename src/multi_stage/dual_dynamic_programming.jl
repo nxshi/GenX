@@ -288,9 +288,9 @@ function write_multi_stage_outputs(stats_d::Dict, outpath::String, settings_d::D
     #write_capacities_charge(outpath, sep, multi_stage_settings_d)
     #write_capacities_energy(outpath, sep, multi_stage_settings_d)
     #write_network_expansion(outpath, sep, multi_stage_settings_d)
-    write_costs(outpath, sep, multi_stage_settings_d, inputs_dict)
-    write_stats(outpath, sep, stats_d)
-    write_settings(outpath, sep, settings_d)
+    write_multistage_costs(outpath, multi_stage_settings_d, inputs_dict)
+    write_multistage_stats(outpath, stats_d)
+    write_settings(outpath, settings_d)
 
 end
 
@@ -350,7 +350,7 @@ inputs:
   * sep – String which represents the file directory separator character.
   * settings\_d - Dictionary containing settings dictionary configured in the multi-stage settings file multi\_stage\_settings.yml.
 """
-function write_costs(outpath::String, sep::String, settings_d::Dict, inputs_dict::Dict)
+function write_multistage_costs(outpath::String, settings_d::Dict, inputs_dict::Dict)
 
     num_stages = settings_d["NumStages"] # Total number of DDP stages
     wacc = settings_d["WACC"] # Interest Rate and also the discount rate unless specified other wise
@@ -379,7 +379,8 @@ function write_costs(outpath::String, sep::String, settings_d::Dict, inputs_dict
     end
 
     # For OPEX costs, apply additional discounting
-    for cost in ["cVar", "cNSE", "cStart", "cUnmetRsv"]
+    # for cost in ["cVar", "cNSE", "cStart", "cUnmetRsv"]
+    for cost in ["cVOM", "cFuel", "cNSE", "cStart", "cUnmetRsv"]
         if cost in df_costs[!, :Costs]
             df_costs[df_costs[!, :Costs].==cost, 2:end] = transpose(OPEXMULTS) .* df_costs[df_costs[!, :Costs].==cost, 2:end]
         end
@@ -388,12 +389,12 @@ function write_costs(outpath::String, sep::String, settings_d::Dict, inputs_dict
     # Remove "cTotal" from results (as this includes Cost-to-Go)
     df_costs = df_costs[df_costs[!, :Costs].!="cTotal", :]
 
-    CSV.write(string(outpath, sep, "costs_multi_stage.csv"), df_costs)
+    CSV.write(joinpath(outpath, "costs_multi_stage.csv"), df_costs)
 
 end
 
 @doc raw"""
-	function write_stats(outpath::String, sep::String, stats_d::Dict)
+	function write_multi_stage_stats(outpath::String, stats_d::Dict)
 
 This function writes the file stats\_multi\_stage.csv. to the Results directory. This file contains the runtime, upper bound, lower bound, and relative optimality gap for each iteration of the DDP algorithm.
 
@@ -403,7 +404,7 @@ inputs:
   * sep – String which represents the file directory separator character.
   * stats\_d – Dictionary which contains the run time, upper bound, and lower bound of each DDP iteration.
 """
-function write_stats(outpath::String, sep::String, stats_d::Dict)
+function write_multistage_stats(outpath::String, stats_d::Dict)
 
     times_a = stats_d["TIMES"] # Time (seconds) of each iteration
     upper_bounds_a = stats_d["UPPER_BOUNDS"] # Upper bound of each iteration
@@ -421,7 +422,7 @@ function write_stats(outpath::String, sep::String, stats_d::Dict)
         Lower_Bound=lower_bounds_a,
         Relative_Gap=realtive_gap_a)
 
-    CSV.write(string(outpath, sep, "stats_multi_stage.csv"), df_stats)
+    CSV.write(joinpath(outpath, "stats_multi_stage.csv"), df_stats)
 
 end
 

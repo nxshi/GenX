@@ -60,39 +60,12 @@ Note that the generator-side rate-based constraint can be used to represent a fe
 """
 function co2_cap(EP::Model, inputs::Dict, setup::Dict)
 
-	println("C02 Policies Module")
-
-	dfGen = inputs["dfGen"]
-	SEG = inputs["SEG"]  # Number of lines
-	G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
-
-	### Constraints ###
-
-	## Mass-based: Emissions constraint in absolute emissions limit (tons)
-	if setup["CO2Cap"] == 1
-		@constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
-			sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) <=
-			sum(inputs["dfMaxCO2"][z,cap] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]))
-		)
-
-	## Load + Rate-based: Emissions constraint in terms of rate (tons/MWh)
-	elseif setup["CO2Cap"] == 2 ##This part moved to non_served_energy.jl
-		@constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
-			sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) <=
-			sum(inputs["dfMaxCO2Rate"][z,cap] * sum(inputs["omega"][t] * (inputs["pD"][t,z] - sum(EP[:vNSE][s,t,z] for s in 1:SEG)) for t=1:T) for z = findall(x->x==1, inputs["dfCO2CapZones"][:,cap])) +
-			sum(inputs["dfMaxCO2Rate"][z,cap] * setup["StorageLosses"] *  EP[:eELOSSByZone][z] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]))
-		)
-
-	## Generation + Rate-based: Emissions constraint in terms of rate (tons/MWh)
-	elseif (setup["CO2Cap"]==3)
-		@constraint(EP, cCO2Emissions_systemwide[cap=1:inputs["NCO2Cap"]],
-			sum(inputs["omega"][t] * EP[:eEmissionsByZone][z,t] for z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]), t=1:T) <=
-			sum(inputs["dfMaxCO2Rate"][z,cap] * inputs["omega"][t] * EP[:eGenerationByZone][z,t] for t=1:T, z=findall(x->x==1, inputs["dfCO2CapZones"][:,cap]))
-		)
-	end 
-
-	return EP
+    println("C02 Policies Module")
+    ## Mass-based: Emissions constraint in absolute emissions limit (tons)
+    @constraint(EP, cCO2Emissions_mass[cap = 1:inputs["NCO2Cap"]],
+        sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap])) <=
+        sum(inputs["dfMaxCO2"][z, cap] for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap]))
+    )
+    return EP
 
 end
