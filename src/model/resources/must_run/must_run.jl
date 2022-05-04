@@ -40,12 +40,6 @@ function must_run!(EP::Model, inputs::Dict, setup::Dict)
 
 	MUST_RUN = inputs["MUST_RUN"]
 	CapacityReserveMargin = setup["CapacityReserveMargin"]
-
-	if haskey(setup, "CapacityReserveMargin")
-	    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
-	else
-	    CapacityReserveMargin = 0
-	end
 	### Expressions ###
 
 	## Power Balance Expressions ##

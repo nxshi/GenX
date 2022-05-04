@@ -26,7 +26,7 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     Z = inputs["Z"]     # Number of zones
     T = inputs["T"]     # Number of time steps (hours)
 
-    dfCost = DataFrame(Costs = ["cTotal", "cInv", "cFOM", "cFuel", "cVOM", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"], Total = zeros(Float64, 9))
+    dfCost = DataFrame(Costs=["cTotal", "cInv", "cFOM", "cFuel", "cVOM", "cNSE", "cStart", "cUnmetRsv", "cNetworkExp"], Total=zeros(Float64, 9))
     dfCost.Total[1] = objective_value(EP)
     dfCost.Total[2] = (value(EP[:eTotalCInv]) +
                        (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCInvEnergy]) : 0) +
@@ -44,15 +44,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfCost.Total[5] = (value(EP[:eTotalCVOMOut]) +
                        (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCVarIn]) : 0) +
                        (!isempty(inputs["FLEX"]) ? value(EP[:eTotalCVarFlexIn]) : 0))
-    if haskey(setup, "CO2Tax")
-        if setup["CO2Tax"] == 1
-            dfCost.Total[5] += value(EP[:eTotalCCO2Tax])
-        end
+    if setup["CO2Tax"] == 1
+        dfCost.Total[5] += value(EP[:eTotalCCO2Tax])
     end
-    if haskey(setup, "CO2Credit")
-        if setup["CO2Credit"] == 1
-            dfCost.Total[5] += value(EP[:eTotalCCO2Credit])
-        end
+    if setup["CO2Credit"] == 1
+        dfCost.Total[5] += value(EP[:eTotalCCO2Credit])
     end
     dfCost.Total[5] += value(EP[:eTotaleCCO2Sequestration])
 
@@ -60,11 +56,9 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if setup["UCommit"] >= 1
         dfCost.Total[7] = value(EP[:eTotalCStart])
     end
-    if haskey(setup, "Reserves")
-        if setup["Reserves"] == 1
-            dfCost.Total[8] = value(EP[:eTotalCRsvPen])
-        end
-    end    
+    if setup["Reserves"] == 1
+        dfCost.Total[8] = value(EP[:eTotalCRsvPen])
+    end
     if setup["NetworkExpansion"] == 1 && Z > 1
         dfCost.Total[9] = value(EP[:eTotalCNetworkExp])
     end
@@ -89,15 +83,11 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         tempCVOM = (value.(EP[:eZonalCVOMOut])[z] +
                     (!isempty(inputs["STOR_ALL"]) ? value.(EP[:eZonalCVarIn])[z] : 0) +
                     (!isempty(inputs["FLEX"]) ? value.(EP[:eZonalCVarFlexIn])[z] : 0))
-        if haskey(setup, "CO2Tax")
-            if setup["CO2Tax"] == 1
-                tempCVOM += value.(EP[:eZonalCCO2Tax])[z]
-            end
+        if setup["CO2Tax"] == 1
+            tempCVOM += value.(EP[:eZonalCCO2Tax])[z]
         end
-        if haskey(setup, "CO2Credit")
-            if setup["CO2Credit"] == 1
-                tempCVOM += value.(EP[:eZonalCCO2Credit])[z]
-            end
+        if setup["CO2Credit"] == 1
+            tempCVOM += value.(EP[:eZonalCCO2Credit])[z]
         end
         tempCVOM += value.(EP[:eZonalCCO2Sequestration])[z]
         tempCStart = (!isempty(inputs["COMMIT"]) ? value.(EP[:eZonalCStart])[z] : 0)

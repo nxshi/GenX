@@ -75,11 +75,11 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     end
     if !isempty(FLEX)
         dfNetRevenue.Var_OM_cost_in[FLEX] .= value.(EP[:ePlantCVarFlexIn][FLEX])
-    end    
+    end
     if setup["ParameterScale"] == 1
         dfNetRevenue.Var_OM_cost_in *= ModelScalingFactor^2 # converting Million US$ to US$
     end
-    
+
     # Add start-up cost to the dataframe
     dfNetRevenue.StartCost = zeros(nrow(dfNetRevenue))
     if setup["UCommit"] >= 1 && !isempty(COMMIT)
@@ -107,49 +107,35 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
     # Add capacity revenue to the dataframe
     dfNetRevenue.ReserveMarginRevenue = zeros(nrow(dfNetRevenue))
-    if haskey(setup, "CapacityReserveMargin")
-        if setup["CapacityReserveMargin"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be $
-            dfNetRevenue.ReserveMarginRevenue += dfResRevenue.AnnualSum
-        end
+    if setup["CapacityReserveMargin"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be $
+        dfNetRevenue.ReserveMarginRevenue += dfResRevenue.AnnualSum
     end
 
     # Add RPS/CES revenue to the dataframe
     dfNetRevenue.ESRRevenue = zeros(nrow(dfNetRevenue))
-    if haskey(setup, "EnergyShareRequirement")
-        if setup["EnergyShareRequirement"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be $
-            dfNetRevenue.ESRRevenue += dfESRRev.AnnualSum
-        end
+    if setup["EnergyShareRequirement"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be $
+        dfNetRevenue.ESRRevenue += dfESRRev.AnnualSum
     end
 
     # Add CO2 Cost to the dataframe
     dfNetRevenue.EmissionsCost = zeros(nrow(dfNetRevenue))
-    if haskey(setup, "CO2Cap")
-        if setup["CO2Cap"] == 1 && has_duals(EP) == 1
-            dfNetRevenue.EmissionsCost .+= dfCO2MassCapCost.AnnualSum
-        end
+    if setup["CO2Cap"] == 1 && has_duals(EP) == 1
+        dfNetRevenue.EmissionsCost .+= dfCO2MassCapCost.AnnualSum
     end
-    if haskey(setup, "CO2LoadRateCap")
-        if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
-            dfNetRevenue.EmissionsCost .+= dfCO2LoadRateCapCost.AnnualSum
-        end
+    if setup["CO2LoadRateCap"] == 1 && has_duals(EP) == 1
+        dfNetRevenue.EmissionsCost .+= dfCO2LoadRateCapCost.AnnualSum
     end
-    if haskey(setup, "CO2GenRateCap")
-        if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
-            dfNetRevenue.EmissionsCost .+= dfCO2GenRateCapCost.AnnualSum
-        end
+    if setup["CO2GenRateCap"] == 1 && has_duals(EP) == 1
+        dfNetRevenue.EmissionsCost .+= dfCO2GenRateCapCost.AnnualSum
     end
-    if haskey(setup, "CO2Tax")
-        if setup["CO2Tax"] == 1
-            dfNetRevenue.EmissionsCost .+= dfCO2TaxCost.AnnualSum
-        end
+    if setup["CO2Tax"] == 1
+        dfNetRevenue.EmissionsCost .+= dfCO2TaxCost.AnnualSum
     end
 
     # Add CO2 Credit to the dataframe
     dfNetRevenue.CO2Credit = zeros(nrow(dfNetRevenue))
-    if haskey(setup, "CO2Credit")
-        if setup["CO2Credit"] == 1
-            dfNetRevenue.CO2Credit .+= (-1) * dfCO2CaptureCredit.AnnualSum
-        end
+    if setup["CO2Credit"] == 1
+        dfNetRevenue.CO2Credit .+= (-1) * dfCO2CaptureCredit.AnnualSum
     end
 
     # Add CO2 Sequestration cost to the dataframe
@@ -161,10 +147,8 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
 
     # Add regional technology subsidy revenue to the dataframe
     dfNetRevenue.RegSubsidyRevenue = zeros(nrow(dfNetRevenue))
-    if haskey(setup, "MinCapReq")
-        if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
-            dfNetRevenue.RegSubsidyRevenue .+= dfRegSubRevenue.SubsidyRevenue
-        end
+    if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
+        dfNetRevenue.RegSubsidyRevenue .+= dfRegSubRevenue.SubsidyRevenue
     end
 
     dfNetRevenue.Revenue = dfNetRevenue.EnergyRevenue + dfNetRevenue.SubsidyRevenue + dfNetRevenue.ReserveMarginRevenue + dfNetRevenue.ESRRevenue + dfNetRevenue.RegSubsidyRevenue + dfNetRevenue.CO2Credit

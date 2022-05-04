@@ -24,7 +24,7 @@ The maximum capacity limit constraint allows for modeling maximum deployment of 
 ```
 Note that $\epsilon_{y,z,p}^{MinCapReq}$ is the eligiblity of a generator of technology $y$ in zone $z$ of requirement $p$ and will be equal to $1$ for eligible generators and will be zero for ineligible resources. The dual value of each minimum capacity constraint can be interpreted as the required payment (e.g. subsidy) per MW per year required to ensure adequate revenue for the qualifying resources.
 """
-function maximum_capacity_limit(EP::Model, inputs::Dict, setup::Dict)
+function maximum_capacity_limit!(EP::Model, inputs::Dict, setup::Dict)
 
     println("Maxmimum Capacity limit Module")
     NumberOfMaxCapReqs = inputs["NumberOfMaxCapReqs"]

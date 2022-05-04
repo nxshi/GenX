@@ -15,7 +15,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 @doc raw""" CO2 emissions and CO2 capture"""
-function co2(EP::Model, inputs::Dict, setup::Dict)
+function co2!(EP::Model, inputs::Dict, setup::Dict)
 
     println("C02 Module")
 

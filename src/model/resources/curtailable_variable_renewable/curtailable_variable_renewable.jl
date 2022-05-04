@@ -29,80 +29,73 @@ The above constraint is defined as an inequality instead of an equality to allow
 Note that if ```Reserves=1``` indicating that frequency regulation and operating reserves are modeled, then this function calls ```curtailable_variable_renewable_reserves!()```, which replaces the above constraints with a formulation inclusive of reserve provision.
 """
 function curtailable_variable_renewable!(EP::Model, inputs::Dict, setup::Dict)
-	## Controllable variable renewable generators
-	### Option of modeling VRE generators with multiple availability profiles and capacity limits -  Num_VRE_Bins in Generators_data.csv  >1
-	## Default value of Num_VRE_Bins ==1
-	println("Dispatchable Resources Module")
+    ## Controllable variable renewable generators
+    ### Option of modeling VRE generators with multiple availability profiles and capacity limits -  Num_VRE_Bins in Generators_data.csv  >1
+    ## Default value of Num_VRE_Bins ==1
+    println("Dispatchable Resources Module")
 
-	dfGen = inputs["dfGen"]
+    dfGen = inputs["dfGen"]
 
-	Reserves = setup["Reserves"]
-	CapacityReserveMargin = setup["CapacityReserveMargin"]
+    Reserves = setup["Reserves"]
+    CapacityReserveMargin = setup["CapacityReserveMargin"]
 
-	T = inputs["T"]     # Number of time steps (hours)
-	Z = inputs["Z"]     # Number of zones
-	G = inputs["G"] 	# Number of generators
+    T = inputs["T"]     # Number of time steps (hours)
+    Z = inputs["Z"]     # Number of zones
+    G = inputs["G"] # Number of generators
 
-	VRE = inputs["VRE"]
+    VRE = inputs["VRE"]
 
-	VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1,:R_ID], VRE)
-	VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
+    VRE_POWER_OUT = intersect(dfGen[dfGen.Num_VRE_Bins.>=1, :R_ID], VRE)
+    VRE_NO_POWER_OUT = setdiff(VRE, VRE_POWER_OUT)
 
-	if haskey(setup, "Reserves")
-	    Reserves = copy(setup["Reserves"])
-	else
-	    Reserves = 0
-	end
 
-	if haskey(setup, "CapacityReserveMargin")
-	    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
-	else
-	    CapacityReserveMargin = 0
-	end
+    Reserves = copy(setup["Reserves"])
 
-	### Expressions ###
+    CapacityReserveMargin = copy(setup["CapacityReserveMargin"])
 
-	## Power Balance Expressions ##
+    ### Expressions ###
 
-	@expression(EP, ePowerBalanceDisp[t=1:T, z=1:Z],
-	sum(EP[:vP][y,t] for y in intersect(VRE, dfGen[dfGen[!,:Zone].==z,:R_ID])))
+    ## Power Balance Expressions ##
 
-	EP[:ePowerBalance] += ePowerBalanceDisp
+    @expression(EP, ePowerBalanceDisp[t=1:T, z=1:Z],
+        sum(EP[:vP][y, t] for y in intersect(VRE, dfGen[dfGen[!, :Zone].==z, :R_ID])))
 
-	# Capacity Reserves Margin policy
-	if CapacityReserveMargin > 0
-		@expression(EP, eCapResMarBalanceVRE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y,Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y,t]  for y in VRE))
-		EP[:eCapResMarBalance] += eCapResMarBalanceVRE
-	end
+    EP[:ePowerBalance] += ePowerBalanceDisp
 
-	### Constratints ###
-	# For resource for which we are modeling hourly power output
-	for y in VRE_POWER_OUT
-		# Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
-		# For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
-		VRE_BINS = intersect(dfGen[dfGen[!,:R_ID].>=y,:R_ID], dfGen[dfGen[!,:R_ID].<=y+dfGen[y,:Num_VRE_Bins]-1,:R_ID])
+    # Capacity Reserves Margin policy
+    if CapacityReserveMargin > 0
+        @expression(EP, eCapResMarBalanceVRE[res=1:inputs["NCapacityReserveMargin"], t=1:T], sum(dfGen[y, Symbol("CapRes_$res")] * EP[:eTotalCap][y] * inputs["pP_Max"][y, t] for y in VRE))
+        EP[:eCapResMarBalance] += eCapResMarBalanceVRE
+    end
 
-		# Constraints on contribution to regulation and reserves
-		if Reserves == 1
-			curtailable_variable_renewable_reserves!(EP, inputs)
-		else
-			# Maximum power generated per hour by renewable generators must be less than
-			# sum of product of hourly capacity factor for each bin times its the bin installed capacity
-			# Note: inequality constraint allows curtailment of output below maximum level.
-			@constraint(EP, [t=1:T], EP[:vP][y,t] <= sum(inputs["pP_Max"][yy,t]*EP[:eTotalCap][yy] for yy in VRE_BINS))
-		end
+    ### Constratints ###
+    # For resource for which we are modeling hourly power output
+    for y in VRE_POWER_OUT
+        # Define the set of generator indices corresponding to the different sites (or bins) of a particular VRE technology (E.g. wind or solar) in a particular zone.
+        # For example the wind resource in a particular region could be include three types of bins corresponding to different sites with unique interconnection, hourly capacity factor and maximim available capacity limits.
+        VRE_BINS = intersect(dfGen[dfGen[!, :R_ID].>=y, :R_ID], dfGen[dfGen[!, :R_ID].<=y+dfGen[y, :Num_VRE_Bins]-1, :R_ID])
 
-	end
+        # Constraints on contribution to regulation and reserves
+        if Reserves == 1
+            curtailable_variable_renewable_reserves!(EP, inputs)
+        else
+            # Maximum power generated per hour by renewable generators must be less than
+            # sum of product of hourly capacity factor for each bin times its the bin installed capacity
+            # Note: inequality constraint allows curtailment of output below maximum level.
+            @constraint(EP, [t = 1:T], EP[:vP][y, t] <= sum(inputs["pP_Max"][yy, t] * EP[:eTotalCap][yy] for yy in VRE_BINS))
+        end
 
-	# Set power variables for all bins that are not being modeled for hourly output to be zero
-	for y in VRE_NO_POWER_OUT
-		fix.(EP[:vP][y,:], 0.0, force=true)
-	end
-	##CO2 Polcy Module VRE Generation by zone
-	@expression(EP, eGenerationByVRE[z=1:Z, t=1:T], # the unit is GW
-		sum(EP[:vP][y,t] for y in intersect(inputs["VRE"], dfGen[dfGen[!,:Zone].==z,:R_ID]))
-	)
-	EP[:eGenerationByZone] += eGenerationByVRE
+    end
+
+    # Set power variables for all bins that are not being modeled for hourly output to be zero
+    for y in VRE_NO_POWER_OUT
+        fix.(EP[:vP][y, :], 0.0, force=true)
+    end
+    ##CO2 Polcy Module VRE Generation by zone
+    @expression(EP, eGenerationByVRE[z=1:Z, t=1:T], # the unit is GW
+        sum(EP[:vP][y, t] for y in intersect(inputs["VRE"], dfGen[dfGen[!, :Zone].==z, :R_ID]))
+    )
+    EP[:eGenerationByZone] += eGenerationByVRE
 
 end
 
