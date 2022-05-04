@@ -35,10 +35,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
                        (!isempty(inputs["STOR_ALL"]) ? value(EP[:eTotalCFOMEnergy]) : 0) +
                        (!isempty(inputs["STOR_ASYMMETRIC"]) ? value(EP[:eTotalCFOMCharge]) : 0))
     dfCost.Total[4] = value(EP[:eTotalCFuelOut])
-    if haskey(setup, "PieceWiseHeatRate")
-        if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
-            dfCost.Total[4] += value(EP[:eCVar_fuel_piecewise])
-        end
+    if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
+        dfCost.Total[4] += value(EP[:eCVar_fuel_piecewise])
     end
 
     dfCost.Total[5] = (value(EP[:eTotalCVOMOut]) +
@@ -75,10 +73,8 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
                     (!isempty(inputs["STOR_ALL"]) ? value.(EP[:eZonalCFOMEnergyCap])[z] : 0) +
                     (!isempty(inputs["STOR_ASYMMETRIC"]) ? value.(EP[:eZonalCFOMChargeCap])[z] : 0))
         tempCFuel = value.(EP[:eZonalCFuelOut])[z]
-        if haskey(setup, "PieceWiseHeatRate")
-            if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
-                tempCFuel += value.(EP[:eZonalCFuel_piecewise])[z]
-            end
+        if setup["PieceWiseHeatRate"] == 1 && setup["UCommit"] >= 1
+            tempCFuel += value.(EP[:eZonalCFuel_piecewise])[z]
         end
         tempCVOM = (value.(EP[:eZonalCVOMOut])[z] +
                     (!isempty(inputs["STOR_ALL"]) ? value.(EP[:eZonalCVarIn])[z] : 0) +

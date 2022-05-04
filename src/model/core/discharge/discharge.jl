@@ -43,12 +43,8 @@ function discharge!(EP::Model, inputs::Dict, setup::Dict)
 
     ## Objective Function Expressions ##
     # if piecewiseheatrate option and ucommit commitment option are active, skip the fuel consumption
-    if haskey(setup, "PieceWiseHeatRate")
-        PieceWiseHeatRate = copy(setup["PieceWiseHeatRate"])
-    else
-        PieceWiseHeatRate = 0
-    end
-    if (PieceWiseHeatRate == 1) & (!isempty(inputs["THERM_COMMIT"]))
+
+    if (setup["PieceWiseHeatRate"] == 1) & (!isempty(inputs["THERM_COMMIT"]))
         inputs["C_Fuel_per_MWh"][inputs["THERM_COMMIT"], :] .= 0
     end
     # Variable costs of "generation" for resource "y" during hour "t" = variable O&M plus fuel cost
