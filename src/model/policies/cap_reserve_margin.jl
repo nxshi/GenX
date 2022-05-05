@@ -30,6 +30,7 @@ Note that multiple capacity reserve margin requirements can be specified coverin
 """
 function cap_reserve_margin!(EP::Model, inputs::Dict, setup::Dict)
     # capacity reserve margin constraint
+    dfGen = inputs["dfGen"]
     Z = inputs["Z"]
     T = inputs["T"]
     SEG = inputs["SEG"] # Number of load curtailment segments
