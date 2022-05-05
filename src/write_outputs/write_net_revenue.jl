@@ -84,7 +84,7 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
     dfNetRevenue.StartCost = zeros(nrow(dfNetRevenue))
     if setup["UCommit"] >= 1 && !isempty(COMMIT)
         # if you don't use vec, dimension won't match
-        dfNetRevenue.StartCost[COMMIT] .= value.(EP[:ePlantCStart][COMMIT])
+        dfNetRevenue.StartCost[COMMIT] .= value.(EP[:ePlantCStart][COMMIT]).data
         if setup["ParameterScale"] == 1
             dfNetRevenue.StartCost *= ModelScalingFactor^2 # converting Million US$ to US$
         end
