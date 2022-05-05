@@ -25,10 +25,10 @@ function write_transmission_losscost(path::AbstractString, inputs::Dict, setup::
     SEG = inputs["SEG"]
 
     dfTransmissionLossCost = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
-    transmissionloss = 0.5 * value.(EP[:eTransLossByZone])
+    transmissionloss = value.(EP[:eTransLossByZone])
     dfTransmissionLossCost.AnnualSum .= vec(sum(transmissionloss .* transpose(dual.(EP[:cPowerBalance])), dims = 2))
     if setup["ParameterScale"] == 1
-        dfTransmissionLossCost.AnnualSum *= (ModelScalingFactor^2)
+        dfTransmissionLossCost.AnnualSum *= ModelScalingFactor^2
     end
     CSV.write(joinpath(path, "TransmissionLossCost.csv"), dfTransmissionLossCost)
     return dfTransmissionLossCost

@@ -44,14 +44,14 @@ function write_co2_load_emission_rate_cap_price_revenue(path::AbstractString, in
     CO2CapEligibleLoad = DataFrame(CO2CapEligibleLoad_MWh = (transpose(inputs["pD"] - value.(EP[:eZonalNSE])) * inputs["omega"]))
     Storageloss = DataFrame(Storageloss_MWh = zeros(Z))
     if !isempty(inputs["STOR_ALL"])
-        if (setup["StorageLosses"] == 1)
+        if setup["StorageLosses"] == 1
             Storageloss.Storageloss_MWh .= value.(EP[:eStorageLossByZone])
         end   
     end
     Transmissionloss = DataFrame(Transmissionloss_MWh = zeros(Z))
     if Z > 1
-        if (setup["PolicyTransmissionLossCoverage"] == 1)
-            Transmissionloss.Transmissionloss_MWh .= 0.5 * value.(EP[:eTransLossByZone])
+        if setup["PolicyTransmissionLossCoverage"] == 1
+            Transmissionloss.Transmissionloss_MWh .= value.(EP[:eTransLossByZoneYear])
         end
     end
 

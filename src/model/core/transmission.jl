@@ -166,7 +166,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     @variable(EP, vTLOSS[l in LOSS_LINES, t=1:T] >= 0)
 
     ### Expressions ###
-
+    # existing transmission availability
     if MultiStage == 1
         @expression(EP, eTransMax[l=1:L], vTRANSMAX[l])
     else
@@ -190,8 +190,10 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     # Net power flow outgoing from zone "z" at hour "t" in MW
     @expression(EP, eNet_Export_Flows[z=1:Z, t=1:T], sum(inputs["pNet_Map"][l, z] * vFLOW[l, t] for l = 1:L))
 
-    # Losses from power flows into or out of zone "z" in MW
-    @expression(EP, eTransLossByZone[z=1:Z, t=1:T], sum(abs(inputs["pNet_Map"][l, z]) * vTLOSS[l, t] for l in LOSS_LINES))
+    # Losses from power flows allocated to zone "z" at hour "t" in MW
+    @expression(EP, eTransLossByZone[z=1:Z, t=1:T], (1 / 2) * sum(abs(inputs["pNet_Map"][l, z]) * vTLOSS[l, t] for l in LOSS_LINES))
+    # Annual total of Losses from power flows allocated to zone "z"
+    @expression(EP, eTransLossByZoneYear[z = 1:Z], sum(inputs["omega"][t] * EP[:eTransLossByZone][z, t] for t in 1:T))
 
     ## Objective Function Expressions ##
 
@@ -215,7 +217,7 @@ function transmission!(EP::Model, inputs::Dict, setup::Dict)
     @expression(EP, ePowerBalanceNetExportFlows[t=1:T, z=1:Z],
         -eNet_Export_Flows[z, t])
     @expression(EP, ePowerBalanceLossesByZone[t=1:T, z=1:Z],
-        -(1 / 2) * eTransLossByZone[z, t])
+        -eTransLossByZone[z, t])
 
     EP[:ePowerBalance] += ePowerBalanceLossesByZone
     EP[:ePowerBalance] += ePowerBalanceNetExportFlows
