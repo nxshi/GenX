@@ -118,7 +118,7 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
 
     # Endogenous Retirements
     if setup["MultiStage"] > 0
-        EP = endogenous_retirement!(EP, inputs, setup)
+        endogenous_retirement!(EP, inputs, setup)
     end
 
     # Unit Commitment 
