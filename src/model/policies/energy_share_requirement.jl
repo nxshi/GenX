@@ -41,7 +41,7 @@ function energy_share_requirement!(EP::Model, inputs::Dict, setup::Dict)
 
     # ESR Policy
     # Set up right hand side (i.e., demand)
-    @expression(EP, eESRRHS[ESR=1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * (inputs["pD"][t, z] - EP[:eZonalNSE[t, z]]) for t = 1:T, z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
+    @expression(EP, eESRRHS[ESR = 1:inputs["nESR"]], sum(inputs["dfESR"][z, ESR] * inputs["omega"][t] * (inputs["pD"][t, z] - EP[:eZonalNSE][t, z]) for t = 1:T, z = findall(x -> x > 0, inputs["dfESR"][:, ESR])))
     # ESR Transmission loss
     # Consider transmission loss, the default is take transmission loss into consideration
     if Z > 1
