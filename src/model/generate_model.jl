@@ -117,27 +117,28 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     investment_discharge!(EP, inputs, setup)
 
     # Endogenous Retirements
-
     if setup["MultiStage"] > 0
         EP = endogenous_retirement!(EP, inputs, setup)
     end
 
+    # Unit Commitment 
+    # (this function only defines variables, and startup costs in the objectives)
     if setup["UCommit"] > 0
         ucommit!(EP, inputs, setup)
     end
 
-    # emissions!(EP, inputs)
-
+    # Operating Reserves (regulation and spinning reserves)
     if setup["Reserves"] > 0
         reserves!(EP, inputs, setup)
     end
 
+    #  Transmission and Transmission Expansion
     if Z > 1
         transmission!(EP, inputs, setup)
     end
 
-    # Model constraints, variables, expression related to energy storage modeling
-
+    # Technologies
+    # Model constraints, variables, expression related to dispatchable renewable resources
     if !isempty(inputs["VRE"])
         curtailable_variable_renewable!(EP, inputs, setup)
     end
@@ -166,61 +167,63 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     if !isempty(inputs["FLEX"])
         flexible_demand!(EP, inputs, setup)
     end
+    
     # Model constraints, variables, expression related to thermal resource technologies
     if !isempty(inputs["THERM_ALL"])
         thermal!(EP, inputs, setup)
     end
 
-    # Policies
     # CO2
     co2!(EP, inputs, setup)
-
-    # CO2 emissions limits
-    # EP = co2_cap(EP, inputs, setup)
+    
+    # Policies
+    # CO2 emissions limits (mass based)
     if setup["CO2Cap"] == 1
         co2_cap!(EP, inputs, setup)
     end
 
+    # CO2 emissions limits (generation emission rate based)
     if setup["CO2GenRateCap"] == 1
         co2_generation_side_emission_rate_cap!(EP, inputs, setup)
     end
 
-
+    # CO2 emissions limits (load emission rate based)
     if setup["CO2LoadRateCap"] == 1
         co2_load_side_emission_rate_cap!(EP, inputs, setup)
     end
 
     # CO2 tax
-    if setup["CO2Tax"] >= 1
+    if setup["CO2Tax"] == 1
         co2_tax!(EP, inputs, setup)
     end
 
     # CO2 credit
-    if setup["CO2Credit"] >= 1
+    if setup["CO2Credit"] == 1
         co2_credit!(EP, inputs, setup)
     end
 
-
     # Energy Share Requirement
-    if setup["EnergyShareRequirement"] >= 1
+    if setup["EnergyShareRequirement"] == 1
         energy_share_requirement!(EP, inputs, setup)
     end
 
     #Capacity Reserve Margin
-    if setup["CapacityReserveMargin"] > 0
+    if setup["CapacityReserveMargin"] == 1
         cap_reserve_margin!(EP, inputs, setup)
     end
 
-    if (setup["MinCapReq"] == 1)
+    # Minimum capacity requirement
+    if setup["MinCapReq"] == 1
         minimum_capacity_requirement!(EP, inputs, setup)
     end
 
-
-    if (setup["MaxCapReq"] == 1)
+    # Maximum capacity limits
+    if setup["MaxCapReq"] == 1
         maximum_capacity_limit!(EP, inputs, setup)
     end
 
-    if (setup["TFS"] == 1)
+    # Twenty-four by seven
+    if setup["TFS"] == 1
         twentyfourseven!(EP, inputs, setup)
     end
 
