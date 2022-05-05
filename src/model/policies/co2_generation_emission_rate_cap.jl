@@ -82,7 +82,7 @@ function co2_generation_side_emission_rate_cap!(EP::Model, inputs::Dict, setup::
     ### Constraints ###
 
     ## Generation + Rate-based: Emissions constraint in terms of rate (tons/MWh)
-    @constraint(EP, cCO2Emissions_genrate[cap=1:inputs["NCO2GenRateCap"]],
+    @constraint(EP, cCO2Cap_genrate[cap=1:inputs["NCO2GenRateCap"]],
         sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2GenRateCapZones"][:, cap])) <=
         sum(inputs["dfMaxCO2GenRate"][z, cap] * inputs["omega"][t] * EP[:eGenerationByZone][z, t] for t = 1:T, z in findall(x -> x == 1, inputs["dfCO2GenRateCapZones"][:, cap]))
     )

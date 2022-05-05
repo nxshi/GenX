@@ -62,7 +62,7 @@ function co2_cap!(EP::Model, inputs::Dict, setup::Dict)
 
     println("C02 Policies Module")
     ## Mass-based: Emissions constraint in absolute emissions limit (tons)
-    @constraint(EP, cCO2Emissions_mass[cap = 1:inputs["NCO2Cap"]],
+    @constraint(EP, cCO2Cap_mass[cap = 1:inputs["NCO2Cap"]],
         sum(EP[:eEmissionsByZoneYear][z] for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap])) <=
         sum(inputs["dfMaxCO2"][z, cap] for z in findall(x -> x == 1, inputs["dfCO2CapZones"][:, cap]))
     )

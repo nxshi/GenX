@@ -35,7 +35,7 @@ function write_co2_generation_emission_rate_cap_price_revenue(path::AbstractStri
 
     tempCO2Price = zeros(Z, inputs["NCO2GenRateCap"])
     for cap = 1:inputs["NCO2GenRateCap"]
-        tempCO2Price[:, cap] .= (-1) * (dual.(EP[:cCO2Emissions_genrate])[cap]) .* inputs["dfCO2GenRateCapZones"][:, cap]
+        tempCO2Price[:, cap] .= (-1) * (dual.(EP[:cCO2Cap_genrate])[cap]) .* inputs["dfCO2GenRateCapZones"][:, cap]
         if setup["ParameterScale"] == 1
             # when scaled, The dual variable is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
             tempCO2Price *= ModelScalingFactor
@@ -51,7 +51,7 @@ function write_co2_generation_emission_rate_cap_price_revenue(path::AbstractStri
     for cap = 1:inputs["NCO2GenRateCap"]
         temp_CO2GenRateCapCost = zeros(G)
         GEN_UNDERCAP = intersect(findall(x -> x == 1, (inputs["dfCO2GenRateCapZones"][dfGen[:, :Zone], cap])), POWERGEN)
-        temp_CO2GenRateCapCost[GEN_UNDERCAP] = (-1) * (dual.(EP[:cCO2Emissions_genrate])[cap]) * (value.(EP[:eEmissionsByPlantYear][GEN_UNDERCAP]) - temp_totalpowerMWh[GEN_UNDERCAP] .* inputs["dfMaxCO2GenRate"][dfGen[GEN_UNDERCAP, :Zone], cap])
+        temp_CO2GenRateCapCost[GEN_UNDERCAP] = (-1) * (dual.(EP[:cCO2Cap_genrate])[cap]) * (value.(EP[:eEmissionsByPlantYear][GEN_UNDERCAP]) - temp_totalpowerMWh[GEN_UNDERCAP] .* inputs["dfMaxCO2GenRate"][dfGen[GEN_UNDERCAP, :Zone], cap])
         if setup["ParameterScale"] == 1
             # when scaled, The dual variable is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
             temp_CO2GenRateCapCost *= (ModelScalingFactor^2)

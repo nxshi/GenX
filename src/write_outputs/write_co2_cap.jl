@@ -31,7 +31,7 @@ function write_co2_cap_price_revenue(path::AbstractString, inputs::Dict, setup::
 
     tempCO2Price = zeros(Z, inputs["NCO2Cap"])
     for cap = 1:inputs["NCO2Cap"]
-        tempCO2Price[:, cap] .= (-1) * (dual.(EP[:cCO2Emissions_mass])[cap]) .* inputs["dfCO2CapZones"][:, cap]
+        tempCO2Price[:, cap] .= (-1) * (dual.(EP[:cCO2Cap_mass])[cap]) .* inputs["dfCO2CapZones"][:, cap]
         if setup["ParameterScale"] == 1
             # when scaled, The dual variable is in unit of Million US$/kton, thus k$/ton, to get $/ton, multiply 1000
             tempCO2Price *= ModelScalingFactor
@@ -44,7 +44,7 @@ function write_co2_cap_price_revenue(path::AbstractString, inputs::Dict, setup::
     dfCO2MassCapRev = DataFrame(Zone = 1:Z, AnnualSum = zeros(Z))
     temp_CO2MassCapRev = zeros(Z)
     for cap = 1:inputs["NCO2Cap"]
-        temp_CO2MassCapRev = (-1) * (dual.(EP[:cCO2Emissions_mass])[cap]) * (inputs["dfCO2CapZones"][:, cap]) .* (inputs["dfMaxCO2"][:, cap])
+        temp_CO2MassCapRev = (-1) * (dual.(EP[:cCO2Cap_mass])[cap]) * (inputs["dfCO2CapZones"][:, cap]) .* (inputs["dfMaxCO2"][:, cap])
         if setup["ParameterScale"] == 1
             # when scaled, The dual variable function is in unit of Million US$/kton; 
             # The budget is in unit of kton, and thus the product is in Million US$. 
@@ -61,7 +61,7 @@ function write_co2_cap_price_revenue(path::AbstractString, inputs::Dict, setup::
         # temp_CO2MassCapCost = DataFrame(A = zeros(G))
         temp_CO2MassCapCost = zeros(G)
         GEN_UNDERCAP = findall(x -> x == 1, (inputs["dfCO2CapZones"][dfGen[:, :Zone], cap]))
-        temp_CO2MassCapCost[GEN_UNDERCAP] = (-1) * (dual.(EP[:cCO2Emissions_mass])[cap]) * (value.(EP[:eEmissionsByPlantYear][GEN_UNDERCAP]))
+        temp_CO2MassCapCost[GEN_UNDERCAP] = (-1) * (dual.(EP[:cCO2Cap_mass])[cap]) * (value.(EP[:eEmissionsByPlantYear][GEN_UNDERCAP]))
         if setup["ParameterScale"] == 1
             # when scaled, The dual variable function is in unit of Million US$/kton; 
             # The budget is in unit of kton, and thus the product is in Million US$. 
