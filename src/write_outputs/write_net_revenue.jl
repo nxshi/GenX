@@ -19,7 +19,7 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 Function for writing net revenue of different generation technologies.
 """
-function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfCO2MassCapCost::DataFrame, dfCO2LoadRateCapCost::DataFrame, dfCO2GenRateCapCost::DataFrame, dfCO2TaxCost::DataFrame, dfCO2CaptureCredit::DataFrame)
+function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::Model, dfESRRev::DataFrame, dfResRevenue::DataFrame, dfChargingcost::DataFrame, dfEnergyRevenue::DataFrame, dfSubRevenue::DataFrame, dfRegSubRevenue::DataFrame, dfCO2MassCapCost::DataFrame, dfCO2LoadRateCapCost::DataFrame, dfCO2GenRateCapCost::DataFrame, dfCO2TaxCost::DataFrame)
     dfGen = inputs["dfGen"]
     T = inputs["T"]     # Number of time steps (hours)
     Z = inputs["Z"]     # Number of zones
@@ -132,22 +132,24 @@ function write_net_revenue(path::AbstractString, inputs::Dict, setup::Dict, EP::
         dfNetRevenue.EmissionsCost .+= dfCO2TaxCost.AnnualSum
     end
 
-    # Add CO2 Credit to the dataframe
+    # Add CO2 Capture cost and Credit to the dataframe
     dfNetRevenue.CO2Credit = zeros(nrow(dfNetRevenue))
-    if setup["CO2Credit"] == 1
-        dfNetRevenue.CO2Credit .+= (-1) * dfCO2CaptureCredit.AnnualSum
+    dfNetRevenue.SequestrationCost = zeros(nrow(dfNetRevenue))
+    if setup["CO2Capture"] == 1
+        dfNetRevenue.SequestrationCost .+= value.(EP[:ePlantCCO2Sequestration])
+        if setup["CO2Credit"] == 1
+            dfNetRevenue.CO2Credit .-= value.(EP[:ePlantCCO2Credit]) # note that the expression is a negative number
+        end
+        if setup["ParameterScale"] == 1
+            dfNetRevenue.SequestrationCost *= ModelScalingFactor^2
+            dfNetRevenue.CO2Credit *= ModelScalingFactor^2
+        end
     end
 
-    # Add CO2 Sequestration cost to the dataframe
-    dfNetRevenue.SequestrationCost = zeros(nrow(dfNetRevenue))
-    dfNetRevenue.SequestrationCost .+= value.(EP[:ePlantCCO2Sequestration])
-    if setup["ParameterScale"] == 1
-        dfNetRevenue.SequestrationCost *= ModelScalingFactor^2
-    end
 
     # Add regional technology subsidy revenue to the dataframe
     dfNetRevenue.RegSubsidyRevenue = zeros(nrow(dfNetRevenue))
-    if setup["MinCapReq"] >= 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
+    if setup["MinCapReq"] == 1 && has_duals(EP) == 1 # The unit is confirmed to be US$
         dfNetRevenue.RegSubsidyRevenue .+= dfRegSubRevenue.SubsidyRevenue
     end
 

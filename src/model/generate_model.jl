@@ -198,8 +198,10 @@ function generate_model(setup::Dict, inputs::Dict, OPTIMIZER::MOI.OptimizerWithA
     end
 
     # CO2 credit
-    if setup["CO2Credit"] == 1
-        co2_credit!(EP, inputs, setup)
+    if setup["CO2Capture"] == 1
+        if setup["CO2Credit"] == 1
+            co2_credit!(EP, inputs, setup)
+        end
     end
 
     # Energy Share Requirement

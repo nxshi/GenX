@@ -45,6 +45,8 @@ function configure_settings(settings_path::String)
     set_default_if_absent!(settings, "CO2GenRateCap", 0)
     # CO2 tax; 0 = not active; 1 = active;
     set_default_if_absent!(settings, "CO2Tax", 0)
+    # CO2 carbon capture and sequestration; 0 = not active; 1 = active, co2 capture will be modeled, cost and caputred emission will be printed;
+    set_default_if_absent!(settings, "CO2Capture", 0)
     # CO2 capture credit; 0 = not active; 1 = active;
     set_default_if_absent!(settings, "CO2Credit", 0)
     # Energy Share Requirement and CO2 constraints account for energy lost; 0 = not active (DO NOT account for energy lost); 1 = active systemwide (DO account for energy lost)

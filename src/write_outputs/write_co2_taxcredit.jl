@@ -16,13 +16,14 @@ received this license file.  If not, see <http://www.gnu.org/licenses/>.
 
 @doc raw"""
 	write_credit_for_captured_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
+    This will report the tax credit earned by capturing emissions.
 """
 function write_credit_for_captured_emissions(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     dfGen = inputs["dfGen"]
     G = inputs["G"]     # Number of resources (generators, storage, DR, and DERs)
 
     dfCO2CaptureCredit = DataFrame(Resource = inputs["RESOURCES"], AnnualSum = zeros(G))
-    dfCO2CaptureCredit.AnnualSum = value.(EP[:eEmissionsCaptureByPlantYear]) * (-1) .* inputs["dfCO2Credit"][dfGen[:, :Zone], "CO2Credit"]
+    dfCO2CaptureCredit.AnnualSum = (-1) * value.(EP[:ePlantCCO2Credit])
     if setup["ParameterScale"] == 1
         dfCO2CaptureCredit.AnnualSum *= ModelScalingFactor^2
     end

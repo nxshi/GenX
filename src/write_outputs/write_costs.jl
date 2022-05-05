@@ -45,10 +45,13 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
     if setup["CO2Tax"] == 1
         dfCost.Total[5] += value(EP[:eTotalCCO2Tax])
     end
-    if setup["CO2Credit"] == 1
-        dfCost.Total[5] += value(EP[:eTotalCCO2Credit])
+    if setup["CO2Capture"] == 1
+        dfCost.Total[5] += value(EP[:eTotaleCCO2Sequestration])
+        if setup["CO2Credit"] == 1
+            dfCost.Total[5] += value(EP[:eTotalCCO2Credit])
+        end
     end
-    dfCost.Total[5] += value(EP[:eTotaleCCO2Sequestration])
+    
 
     dfCost.Total[6] = value(EP[:eTotalCNSE])
     if setup["UCommit"] >= 1
@@ -82,10 +85,12 @@ function write_costs(path::AbstractString, inputs::Dict, setup::Dict, EP::Model)
         if setup["CO2Tax"] == 1
             tempCVOM += value.(EP[:eZonalCCO2Tax])[z]
         end
-        if setup["CO2Credit"] == 1
-            tempCVOM += value.(EP[:eZonalCCO2Credit])[z]
+        if setup["CO2Capture"] == 1
+            if setup["CO2Credit"] == 1
+                tempCVOM += value.(EP[:eZonalCCO2Credit])[z]
+            end
+            tempCVOM += value.(EP[:eZonalCCO2Sequestration])[z]
         end
-        tempCVOM += value.(EP[:eZonalCCO2Sequestration])[z]
         tempCStart = (!isempty(inputs["COMMIT"]) ? value.(EP[:eZonalCStart])[z] : 0)
         tempCNSE = value.(EP[:eZonalCNSE])[z]
 

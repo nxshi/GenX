@@ -173,8 +173,9 @@ function load_generators_data(setup::Dict, path::AbstractString, inputs_gen::Dic
 			inputs_gen["dfGen"][!, :Min_Retired_Energy_Cap_MW] = gen_in[!, :Min_Retired_Energy_Cap_MW] / ModelScalingFactor
 		end
 		# if scale, then the unit becomes Million$/kton.
-	    inputs_gen["dfGen"][!, :CO2_Capture_Cost_per_Metric_Ton] = gen_in[!, :CO2_Capture_Cost_per_Metric_Ton] / ModelScalingFactor
-
+		if setup["CO2Capture"] == 1
+			inputs_gen["dfGen"][!, :CO2_Capture_Cost_per_Metric_Ton] /= ModelScalingFactor
+		end
 	end
 
 # Dharik - Done, we have scaled fuel costs above so any parameters on per MMBtu do not need to be scaled

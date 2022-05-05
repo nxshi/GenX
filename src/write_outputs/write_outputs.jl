@@ -207,15 +207,17 @@ function write_outputs(EP::Model, path::AbstractString, setup::Dict, inputs::Dic
             dfCO2TaxCost = write_co2_tax(path, inputs, setup, EP)
         end
         dfCO2CaptureCredit = DataFrame()
-        if setup["CO2Credit"] == 1
-            dfCO2CaptureCredit = write_credit_for_captured_emissions(path, inputs, setup, EP)
+        if setup["CO2Capture"] == 1
+            if setup["CO2Credit"] == 1
+                dfCO2CaptureCredit = write_credit_for_captured_emissions(path, inputs, setup, EP)
+            end
         end
 
         if setup["TFS"] == 1
             write_twentyfourseven(path, inputs, setup, EP)
         end
 
-        write_net_revenue(path, inputs, setup, EP, dfESRRev, dfResRevenue, dfChargingcost, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfCO2MassCapCost, dfCO2LoadRateCapCost, dfCO2GenRateCapCost, dfCO2TaxCost, dfCO2CaptureCredit)
+        write_net_revenue(path, inputs, setup, EP, dfESRRev, dfResRevenue, dfChargingcost, dfEnergyRevenue, dfSubRevenue, dfRegSubRevenue, dfCO2MassCapCost, dfCO2LoadRateCapCost, dfCO2GenRateCapCost, dfCO2TaxCost)
 
 
 

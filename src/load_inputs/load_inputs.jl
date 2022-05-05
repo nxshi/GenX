@@ -101,11 +101,13 @@ function load_inputs(setup::Dict, path::AbstractString)
     if setup["CO2LoadRateCap"] == 1
         inputs = load_co2_load_side_emission_rate_cap(setup, path, inputs)
     end
-    if setup["CO2Tax"] >= 1
+    if setup["CO2Tax"] == 1
         inputs = load_co2_tax(setup, path, inputs)
     end
-    if setup["CO2Credit"] >= 1
-        inputs = load_co2_credit(setup, path, inputs)
+    if setup["CO2Capture"] == 1
+        if setup["CO2Credit"] == 1
+            inputs = load_co2_credit(setup, path, inputs)
+        end
     end
     if setup["TFS"] == 1
         inputs = load_twentyfourseven(setup, path, inputs)
