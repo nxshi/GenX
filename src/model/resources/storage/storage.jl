@@ -120,23 +120,23 @@ function storage!(EP::Model, inputs::Dict, setup::Dict)
     MultiStage = copy(setup["MultiStage"])
 
     if !isempty(STOR_ALL)
-        EP = investment_energy!(EP, inputs, setup)
+        investment_energy!(EP, inputs, setup)
         #EP = investment_energy(EP, inputs) ##From main
-        EP = storage_all!(EP, inputs, setup)
+        storage_all!(EP, inputs, setup)
 
         # Include Long Duration Storage only when modeling representative periods and long-duration storage
         if OperationWrapping == 1 && !isempty(inputs["STOR_LONG_DURATION"])
-            EP = long_duration_storage!(EP, inputs)
+            long_duration_storage!(EP, inputs)
         end
     end
 
     if !isempty(inputs["STOR_ASYMMETRIC"])
-        EP = investment_charge!(EP, inputs, setup)
-        EP = storage_asymmetric!(EP, inputs, setup)
+        investment_charge!(EP, inputs, setup)
+        storage_asymmetric!(EP, inputs, setup)
     end
 
     if !isempty(inputs["STOR_SYMMETRIC"])
-        EP = storage_symmetric!(EP, inputs, setup)
+        storage_symmetric!(EP, inputs, setup)
     end
 
     return EP
