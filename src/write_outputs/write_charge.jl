@@ -29,10 +29,10 @@ function write_charge(path::AbstractString, inputs::Dict, setup::Dict, EP::Model
     dfCharge = DataFrame(Resource=inputs["RESOURCES"], Zone=dfGen[!, :Zone], AnnualSum=zeros(G))
     charge = zeros(G, T)
     if !isempty(inputs["STOR_ALL"])
-        charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :])
+        charge[STOR_ALL, :] = value.(EP[:vCHARGE][STOR_ALL, :]).data
     end
     if !isempty(inputs["FLEX"])
-        charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :])
+        charge[FLEX, :] = value.(EP[:vCHARGE_FLEX][FLEX, :]).data
     end
     if setup["ParameterScale"] == 1
         charge *= ModelScalingFactor
