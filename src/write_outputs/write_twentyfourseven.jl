@@ -83,7 +83,7 @@ function write_twentyfourseven(path::AbstractString, inputs::Dict, setup::Dict, 
         dfTFSExport = hcat(dfTFSExport, DataFrame(temptfsexport, [Symbol("t$t") for t in 1:T]))
         CSV.write(joinpath(path, "tfs_tfsexport.csv"), dftranspose(dfTFSExport, false), writeheader=false)
     
-        dfTFSTransactionCost = DataFrame(RPSH_PathID=1:NumberofTFS, AnnualSum=zeros(NumberofTFS))
+        dfTFSTransactionCost = DataFrame(RPSH_PathID=1:NumberofTFSPath, AnnualSum=zeros(NumberofTFSPath))
         temptfstranscationcost = value.(EP[:eTFSTranscationCost])
         if setup["ParameterScale"] == 1
             temptfstranscationcost *= ModelScalingFactor^2
