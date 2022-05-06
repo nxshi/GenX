@@ -61,7 +61,7 @@ function write_co2_cap_price_revenue(path::AbstractString, inputs::Dict, setup::
         # temp_CO2MassCapCost = DataFrame(A = zeros(G))
         temp_CO2MassCapCost = zeros(G)
         GEN_UNDERCAP = findall(x -> x == 1, (inputs["dfCO2CapZones"][dfGen[:, :Zone], cap]))
-        temp_CO2MassCapCost[GEN_UNDERCAP] = (-1) * (dual.(EP[:cCO2Cap_mass])[cap]) * (value.(EP[:eEmissionsByPlantYear][GEN_UNDERCAP]).data)
+        temp_CO2MassCapCost[GEN_UNDERCAP] = (-1) * (dual.(EP[:cCO2Cap_mass])[cap]) * (value.(EP[:eEmissionsByPlantYear][GEN_UNDERCAP]))
         if setup["ParameterScale"] == 1
             # when scaled, The dual variable function is in unit of Million US$/kton; 
             # The budget is in unit of kton, and thus the product is in Million US$. 

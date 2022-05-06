@@ -26,7 +26,7 @@ function write_charging_cost(path::AbstractString, inputs::Dict, setup::Dict, EP
 	    chargecost[STOR_ALL, :] .= (value.(EP[:vCHARGE][STOR_ALL, :]).data) .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[STOR_ALL, :Zone], :]
 	end
 	if !isempty(FLEX)
-	    chargecost[FLEX, :] .= value.(EP[:vP][FLEX, :]).data .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[FLEX, :Zone], :]
+	    chargecost[FLEX, :] .= value.(EP[:vP][FLEX, :]) .* transpose(dual.(EP[:cPowerBalance]) ./ inputs["omega"])[dfGen[FLEX, :Zone], :]
 	end
 	if setup["ParameterScale"] == 1
 	    chargecost *= ModelScalingFactor^2
