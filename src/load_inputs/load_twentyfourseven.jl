@@ -49,10 +49,10 @@ function load_twentyfourseven(setup::Dict, path::AbstractString, inputs_tfs::Dic
         NumberofTFSPath = size(collect(inputs_tfs["TFS_Network"][:, :RPSH_PathID]), 1)
         inputs_tfs["NumberofTFSPath"] = NumberofTFSPath
         if setup["ParameterScale"] == 1
-            inputs_tfs["TFS_Network"][:, :MaxFlow_Forward] = inputs_tfs["TFS_Network"][:, :MaxFlow_Forward] ./ ModelScalingFactor
-            inputs_tfs["TFS_Network"][:, :MaxFlow_Backward] = inputs_tfs["TFS_Network"][:, :MaxFlow_Backward] ./ ModelScalingFactor
-            inputs_tfs["TFS_Network"][:, :HurdleRate_Forward] = inputs_tfs["TFS_Network"][:, :HurdleRate_Forward] ./ ModelScalingFactor
-            inputs_tfs["TFS_Network"][:, :HurdleRate_Backward] = inputs_tfs["TFS_Network"][:, :HurdleRate_Backward] ./ ModelScalingFactor
+            inputs_tfs["TFS_Network"][:, :MaxFlow_Forward] ./= ModelScalingFactor
+            inputs_tfs["TFS_Network"][:, :MaxFlow_Backward] ./= ModelScalingFactor
+            inputs_tfs["TFS_Network"][:, :HurdleRate_Forward] ./= ModelScalingFactor
+            inputs_tfs["TFS_Network"][:, :HurdleRate_Backward] ./= ModelScalingFactor
         end        
         println("RPSH_Network.csv Successfully Read!")
     end

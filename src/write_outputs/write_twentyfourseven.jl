@@ -66,7 +66,7 @@ function write_twentyfourseven(path::AbstractString, inputs::Dict, setup::Dict, 
     if (NumberofTFS) > 1
         NumberofTFSPath = inputs["NumberofTFSPath"]
         dfTFSFlow = DataFrame(RPSH_PathID=1:NumberofTFSPath, AnnualSum=zeros(NumberofTFSPath))
-        temptfsflow = value.(EP[:vTFSFlow])
+        temptfsflow = value.(EP[:eTFSFlow])
         if setup["ParameterScale"] == 1
             temptfsflow *= ModelScalingFactor
         end
